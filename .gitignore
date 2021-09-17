@@ -1,0 +1,14 @@
+node_modules
+
+#Hardhat files
+cache
+artifacts
+abi
+.idea
+deployments
+
+node_modules
+
+#Hardhat files
+cache
+artifacts
