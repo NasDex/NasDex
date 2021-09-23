@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 
 // NSDXToken with Governance
 contract NSDXToken is Ownable, ERC20, ERC20Permit, ERC20VotesComp {
-    constructor() ERC20("NSDXToken", "NSDX") ERC20Permit("NSDXToken") {}
+    constructor() ERC20("NASDEX Token", "NSDX") ERC20Permit("NASDEX Token") {}
 
     function _afterTokenTransfer(address from, address to, uint256 amount)
     internal

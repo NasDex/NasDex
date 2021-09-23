@@ -2,7 +2,7 @@ module.exports = async function ({ ethers, getNamedAccounts, deployments }) {
     const { deploy } = deployments
     const { deployer } = await getNamedAccounts()
 
-    const supplyInit = ethers.BigNumber.from('20000000000000000000000000') // 200000000 ** 18
+    const supplyInit = ethers.BigNumber.from('60000000000000000000000000') // 6000 0000 ** 18
 
     await deploy("NSDXToken", {
         from: deployer,
