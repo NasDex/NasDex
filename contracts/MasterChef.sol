@@ -75,6 +75,7 @@ contract MasterChef is Ownable, ReentrancyGuard {
     event LogSetPool(uint256 indexed pid, uint256 allocPoint, bool overwrite);
     event LogUpdatePool(uint256 indexed pid, uint256 lastRewardBlock, uint256 lpSupply, uint256 accNSDXPerShare);
     event SetMaxMint(uint256 _nsdxMaxMint);
+    event SetPerBLock(uint256 _nsdxPerBlock);
 
     constructor(
         NSDXToken _nsdx,
@@ -240,6 +241,17 @@ contract MasterChef is Ownable, ReentrancyGuard {
         require(_nsdxMaxMint > nsdxTotalMinted, "setMaxMint: the new max mint must be greater than current minted");
         nsdxMaxMint = _nsdxMaxMint;
         emit SetMaxMint(_nsdxMaxMint);
+    }
+
+    // @notice Set the nsdx per block only by owner
+    // @param `_nsdxPerBlock` NSDX tokens created per block.
+    // @param `_withUpdate` if true, it will update all pools, be careful of gas spending!
+    function setPerBlock(uint256 _nsdxPerBlock, bool _withUpdate) public onlyOwner {
+        if (_withUpdate) {
+            massUpdatePools();
+        }
+        nsdxPerBlock = _nsdxPerBlock;
+        emit SetPerBLock(_nsdxPerBlock);
     }
 
     /**
