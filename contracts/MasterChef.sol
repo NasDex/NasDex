@@ -38,10 +38,10 @@ contract MasterChef is Ownable, ReentrancyGuard {
     }
 
     // The NSDX TOKEN!
-    NSDXToken public nsdx;
+    NSDXToken immutable nsdx;
 
     // The reward bar
-    NSDXBar public bar;
+    NSDXBar immutable bar;
 
     // @notice NSDX tokens created per block.
     uint256 public nsdxPerBlock;
@@ -76,6 +76,7 @@ contract MasterChef is Ownable, ReentrancyGuard {
     event LogUpdatePool(uint256 indexed pid, uint256 lastRewardBlock, uint256 lpSupply, uint256 accNSDXPerShare);
     event SetMaxMint(uint256 _nsdxMaxMint);
     event SetPerBLock(uint256 _nsdxPerBlock);
+    event UpdateMultiplier(uint256 multiplierNumber);
 
     constructor(
         NSDXToken _nsdx,
@@ -105,6 +106,7 @@ contract MasterChef is Ownable, ReentrancyGuard {
 
     function updateMultiplier(uint256 multiplierNumber) public onlyOwner {
         BONUS_MULTIPLIER = multiplierNumber;
+        emit UpdateMultiplier(multiplierNumber);
     }
 
     function poolLength() external view returns (uint256) {
@@ -134,8 +136,10 @@ contract MasterChef is Ownable, ReentrancyGuard {
         } else {
             updatePool(_pid);
         }
-        totalAllocPoint = totalAllocPoint.sub(poolInfo[_pid].allocPoint).add(_allocPoint);
-        poolInfo[_pid].allocPoint = _allocPoint;
+        if (_allocPoint != poolInfo[_pid].allocPoint) {
+            totalAllocPoint = totalAllocPoint.sub(poolInfo[_pid].allocPoint).add(_allocPoint);
+            poolInfo[_pid].allocPoint = _allocPoint;
+        }
     }
 
     // Return reward multiplier over the given _from to _to block.

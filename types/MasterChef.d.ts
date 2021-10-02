@@ -23,14 +23,10 @@ interface MasterChefInterface extends ethers.utils.Interface {
   functions: {
     "BONUS_MULTIPLIER()": FunctionFragment;
     "add(uint256,address,bool)": FunctionFragment;
-    "bar()": FunctionFragment;
     "deposit(uint256,uint256)": FunctionFragment;
     "emergencyWithdraw(uint256)": FunctionFragment;
     "getMultiplier(uint256,uint256)": FunctionFragment;
     "massUpdatePools()": FunctionFragment;
-    "migrate(uint256)": FunctionFragment;
-    "migrator()": FunctionFragment;
-    "nsdx()": FunctionFragment;
     "nsdxMaxMint()": FunctionFragment;
     "nsdxPerBlock()": FunctionFragment;
     "nsdxTotalMinted()": FunctionFragment;
@@ -41,7 +37,7 @@ interface MasterChefInterface extends ethers.utils.Interface {
     "renounceOwnership()": FunctionFragment;
     "set(uint256,uint256,bool)": FunctionFragment;
     "setMaxMint(uint256)": FunctionFragment;
-    "setMigrator(address)": FunctionFragment;
+    "setPerBlock(uint256,bool)": FunctionFragment;
     "startBlock()": FunctionFragment;
     "totalAllocPoint()": FunctionFragment;
     "transferNSDXOwnership(address)": FunctionFragment;
@@ -60,7 +56,6 @@ interface MasterChefInterface extends ethers.utils.Interface {
     functionFragment: "add",
     values: [BigNumberish, string, boolean]
   ): string;
-  encodeFunctionData(functionFragment: "bar", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "deposit",
     values: [BigNumberish, BigNumberish]
@@ -77,12 +72,6 @@ interface MasterChefInterface extends ethers.utils.Interface {
     functionFragment: "massUpdatePools",
     values?: undefined
   ): string;
-  encodeFunctionData(
-    functionFragment: "migrate",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(functionFragment: "migrator", values?: undefined): string;
-  encodeFunctionData(functionFragment: "nsdx", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "nsdxMaxMint",
     values?: undefined
@@ -120,7 +109,10 @@ interface MasterChefInterface extends ethers.utils.Interface {
     functionFragment: "setMaxMint",
     values: [BigNumberish]
   ): string;
-  encodeFunctionData(functionFragment: "setMigrator", values: [string]): string;
+  encodeFunctionData(
+    functionFragment: "setPerBlock",
+    values: [BigNumberish, boolean]
+  ): string;
   encodeFunctionData(
     functionFragment: "startBlock",
     values?: undefined
@@ -159,7 +151,6 @@ interface MasterChefInterface extends ethers.utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "add", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "bar", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "deposit", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "emergencyWithdraw",
@@ -173,9 +164,6 @@ interface MasterChefInterface extends ethers.utils.Interface {
     functionFragment: "massUpdatePools",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "migrate", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "migrator", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "nsdx", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "nsdxMaxMint",
     data: BytesLike
@@ -202,7 +190,7 @@ interface MasterChefInterface extends ethers.utils.Interface {
   decodeFunctionResult(functionFragment: "set", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "setMaxMint", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "setMigrator",
+    functionFragment: "setPerBlock",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "startBlock", data: BytesLike): Result;
@@ -235,6 +223,8 @@ interface MasterChefInterface extends ethers.utils.Interface {
     "LogUpdatePool(uint256,uint256,uint256,uint256)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
     "SetMaxMint(uint256)": EventFragment;
+    "SetPerBLock(uint256)": EventFragment;
+    "UpdateMultiplier(uint256)": EventFragment;
     "Withdraw(address,uint256,uint256)": EventFragment;
   };
 
@@ -246,6 +236,8 @@ interface MasterChefInterface extends ethers.utils.Interface {
   getEvent(nameOrSignatureOrTopic: "LogUpdatePool"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "SetMaxMint"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "SetPerBLock"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "UpdateMultiplier"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Withdraw"): EventFragment;
 }
 
@@ -302,8 +294,6 @@ export class MasterChef extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    bar(overrides?: CallOverrides): Promise<[string]>;
-
     deposit(
       _pid: BigNumberish,
       _amount: BigNumberish,
@@ -324,15 +314,6 @@ export class MasterChef extends BaseContract {
     massUpdatePools(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
-
-    migrate(
-      _pid: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    migrator(overrides?: CallOverrides): Promise<[string]>;
-
-    nsdx(overrides?: CallOverrides): Promise<[string]>;
 
     nsdxMaxMint(overrides?: CallOverrides): Promise<[BigNumber]>;
 
@@ -378,8 +359,9 @@ export class MasterChef extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    setMigrator(
-      _migrator: string,
+    setPerBlock(
+      _nsdxPerBlock: BigNumberish,
+      _withUpdate: boolean,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -431,8 +413,6 @@ export class MasterChef extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  bar(overrides?: CallOverrides): Promise<string>;
-
   deposit(
     _pid: BigNumberish,
     _amount: BigNumberish,
@@ -453,15 +433,6 @@ export class MasterChef extends BaseContract {
   massUpdatePools(
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
-
-  migrate(
-    _pid: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  migrator(overrides?: CallOverrides): Promise<string>;
-
-  nsdx(overrides?: CallOverrides): Promise<string>;
 
   nsdxMaxMint(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -507,8 +478,9 @@ export class MasterChef extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  setMigrator(
-    _migrator: string,
+  setPerBlock(
+    _nsdxPerBlock: BigNumberish,
+    _withUpdate: boolean,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -560,8 +532,6 @@ export class MasterChef extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    bar(overrides?: CallOverrides): Promise<string>;
-
     deposit(
       _pid: BigNumberish,
       _amount: BigNumberish,
@@ -580,12 +550,6 @@ export class MasterChef extends BaseContract {
     ): Promise<BigNumber>;
 
     massUpdatePools(overrides?: CallOverrides): Promise<void>;
-
-    migrate(_pid: BigNumberish, overrides?: CallOverrides): Promise<void>;
-
-    migrator(overrides?: CallOverrides): Promise<string>;
-
-    nsdx(overrides?: CallOverrides): Promise<string>;
 
     nsdxMaxMint(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -629,7 +593,11 @@ export class MasterChef extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    setMigrator(_migrator: string, overrides?: CallOverrides): Promise<void>;
+    setPerBlock(
+      _nsdxPerBlock: BigNumberish,
+      _withUpdate: boolean,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     startBlock(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -750,6 +718,14 @@ export class MasterChef extends BaseContract {
       _nsdxMaxMint?: null
     ): TypedEventFilter<[BigNumber], { _nsdxMaxMint: BigNumber }>;
 
+    SetPerBLock(
+      _nsdxPerBlock?: null
+    ): TypedEventFilter<[BigNumber], { _nsdxPerBlock: BigNumber }>;
+
+    UpdateMultiplier(
+      multiplierNumber?: null
+    ): TypedEventFilter<[BigNumber], { multiplierNumber: BigNumber }>;
+
     Withdraw(
       user?: string | null,
       pid?: BigNumberish | null,
@@ -769,8 +745,6 @@ export class MasterChef extends BaseContract {
       _withUpdate: boolean,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
-
-    bar(overrides?: CallOverrides): Promise<BigNumber>;
 
     deposit(
       _pid: BigNumberish,
@@ -792,15 +766,6 @@ export class MasterChef extends BaseContract {
     massUpdatePools(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
-
-    migrate(
-      _pid: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    migrator(overrides?: CallOverrides): Promise<BigNumber>;
-
-    nsdx(overrides?: CallOverrides): Promise<BigNumber>;
 
     nsdxMaxMint(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -836,8 +801,9 @@ export class MasterChef extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    setMigrator(
-      _migrator: string,
+    setPerBlock(
+      _nsdxPerBlock: BigNumberish,
+      _withUpdate: boolean,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -888,8 +854,6 @@ export class MasterChef extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    bar(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     deposit(
       _pid: BigNumberish,
       _amount: BigNumberish,
@@ -910,15 +874,6 @@ export class MasterChef extends BaseContract {
     massUpdatePools(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
-
-    migrate(
-      _pid: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    migrator(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    nsdx(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     nsdxMaxMint(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
@@ -957,8 +912,9 @@ export class MasterChef extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    setMigrator(
-      _migrator: string,
+    setPerBlock(
+      _nsdxPerBlock: BigNumberish,
+      _withUpdate: boolean,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
